@@ -1,15 +1,15 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "gtavimap-one.vercel.app" }],
-      "destination": "https://liveblip.com/:path*",
+      "destination": "https://liveblip.com/$1",
       "permanent": false
     },
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "liveblip.vercel.app" }],
-      "destination": "https://liveblip.com/:path*",
+      "destination": "https://liveblip.com/$1",
       "permanent": false
     }
   ],
