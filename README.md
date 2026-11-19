@@ -1,6 +1,6 @@
-# Leonida Map
+# LiveBlip
 
-An unofficial, interactive map of Leonida in GTA VI. Runs in the browser on desktop and mobile.
+An unofficial, interactive map of Leonida in GTA VI, live at https://liveblip.com. Runs in the browser on desktop and mobile.
 
 The site is static: no build step, no server. Serve the repository root with any web server
 (`python3 -m http.server`) or publish it as it is.

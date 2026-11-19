@@ -12,7 +12,7 @@ body = re.search(r"<!-- app:start -->(.*)<!-- app:end -->", html, re.S).group(1)
 fonts = re.search(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com[^"]+)">', html).group(1)
 css = open("css/app.css", encoding="utf-8").read()
 js = open("js/app.js", encoding="utf-8").read()
-out = f"""<title>Leonida Map</title>
+out = f"""<title>LiveBlip</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="{fonts}">
 <style>
