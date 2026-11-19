@@ -147,6 +147,8 @@ button:focus-visible, #q:focus-visible, input:focus-visible { outline: 2px solid
   display: grid; place-items: center; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1; }
 .pt.sel { box-shadow: 0 0 0 3px var(--label), 0 0 0 5px #0d2c3a; }
 .pt.unconfirmed { border-style: dashed; }
+.pt.found { opacity: .55; font-size: 16px; }
+.pt.found.sel { opacity: 1; }
 
 @media (max-width: 560px) {
   #credit { font-size: 10px; max-width: 38ch; }

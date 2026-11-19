@@ -126,7 +126,7 @@
     if (pin) { pin.remove(); pin = null; }
     if (current && current.kind === 'point' && current.item.marker) setSel(current.item, false);
   }
-  function closeCard() { clearSelection(); card.hidden = true; current = null; }
+  function closeCard() { var was = current; clearSelection(); card.hidden = true; current = null; setHash(''); if (was && was.kind === 'point') applyLayers(); }
   function refreshCard() {
     if (!current) return;
     if (current.kind === 'me') showMeCard(); else if (current.kind === 'place') showPlace(current.item, false); else showPoint(current.item, false);
@@ -141,24 +141,48 @@
   function posAction() { return mePos ? [] : [['Set my position', function () { closeCard(); setPlacing(true); }]]; }
 
   function showPlace(p, fly) {
-    clearSelection(); current = { kind: 'place', item: p };
+    var was = current; clearSelection(); current = { kind: 'place', item: p }; setHash(''); if (was && was.kind === 'point') applyLayers();
     pin = L.marker(ll(p.x, p.y), { interactive: false, keyboard: false,
       icon: L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
     renderCard(p.name, [rows([['Type', PLACE_TYPES[p.type]], ['Grid', gridRef(p)], distRow(p)])], posAction());
     if (fly) flyToVisible(p, PLACE_ZOOM[p.type], 0.8);
   }
   function showMeCard() {
-    clearSelection(); current = { kind: 'me' };
+    var was = current; clearSelection(); current = { kind: 'me' }; setHash(''); if (was && was.kind === 'point') applyLayers();
     renderCard('Your position', [rows([['Grid', gridRef(mePos)], ['Saved', 'in this browser only']])], [
       ['Move', function () { closeCard(); setPlacing(true); }, true],
       ['Remove', function () { setMe(null, true); closeCard(); }]
     ]);
   }
-  function setSel(pt, on) { var n = pt.marker && pt.marker.getElement(); if (n && n.firstChild) n.firstChild.classList.toggle('sel', on); }
+  function makeIcon(pt) {
+    var d = el('div', isFound(pt) ? '\u2713' : CATS[pt.category].glyph, 'pt' + (pt.status === 'confirmed' ? '' : ' unconfirmed') + (isFound(pt) ? ' found' : '') + (pt.sel ? ' sel' : ''));
+    d.style.background = 'var(--c-' + pt.category + ')';
+    return L.divIcon({ className: '', html: d.outerHTML, iconSize: [28, 28], iconAnchor: [14, 14] });
+  }
+  function setSel(pt, on) { pt.sel = on; if (pt.marker) pt.marker.setIcon(makeIcon(pt)); }
+  // Progress: which points this player has ticked off. Kept in this browser only.
+  var found = prefs.get('found', {}), hideFound = prefs.get('hideFound', false);
+  function isFound(pt) { return !!found[pt.id]; }
+  function toggleFound(pt) {
+    if (found[pt.id]) delete found[pt.id]; else found[pt.id] = 1;
+    prefs.set('found', found);
+    pt.marker.setIcon(makeIcon(pt)); applyLayers(); renderLayers(); showPoint(pt, false);
+  }
+  // Each point has its own link (#id) so it can be shared.
+  function setHash(id) { try { history.replaceState(null, '', id ? '#' + id : location.pathname + location.search); } catch (e) {} }
+  function copyLink(pt, btn) {
+    var url = location.origin + location.pathname + '#' + pt.id, done = function (t) { btn.textContent = t; };
+    try { navigator.clipboard.writeText(url).then(function () { done('Link copied'); }, function () { done(url); }); } catch (e) { done(url); }
+  }
+  function openFromHash() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var pt = id && points.filter(function (x) { return x.id === id; })[0];
+    if (pt && !(current && current.item === pt)) showPoint(pt, true);
+  }
   function showPoint(pt, fly) {
     clearSelection(); current = { kind: 'point', item: pt };
-    if (!layerOn[pt.category]) { layerOn[pt.category] = true; prefs.set('layers', layerOn); applyLayers(); renderLayers(); }
-    setSel(pt, true);
+    if (!layerOn[pt.category]) { layerOn[pt.category] = true; prefs.set('layers', layerOn); renderLayers(); }
+    setSel(pt, true); applyLayers(); setHash(pt.id);
     var badges = el('div', null, 'badges');
     badges.appendChild(el('span', CATS[pt.category].label, 'badge cat'));
     badges.appendChild(pt.status === 'confirmed' ? el('span', 'Confirmed', 'badge ok') : el('span', 'Unconfirmed', 'badge warn'));
@@ -171,36 +195,44 @@
       el('p', pt.text),
       pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area, not the exact spot.', 'note') : null,
       rows([['Grid', gridRef(pt)], distRow(pt), src ? ['Source', src] : null])
-    ], posAction());
+    ], [
+      [isFound(pt) ? 'Found \u2713 (undo)' : 'Mark as found', function () { toggleFound(pt); }, !isFound(pt)],
+      ['Copy link', function () { copyLink(pt, this); }]
+    ].concat(posAction()));
     if (fly) flyToVisible(pt, pt.precision === 'area' ? 2.75 : 3.5, 0.8);
   }
 
   // ---- Layers ----
   var places = [], points = [], groups = {}, layerOn = prefs.get('layers', {}), spoilers = prefs.get('spoilers', false);
-  function visible(pt) { return spoilers || !pt.spoiler; }
+  function spoilerOk(pt) { return spoilers || !pt.spoiler; }
+  function visible(pt) { return spoilerOk(pt) && !(hideFound && isFound(pt)); }
   function applyLayers() {
     Object.keys(groups).forEach(function (c) { layerOn[c] ? groups[c].addTo(map) : groups[c].remove(); });
-    points.forEach(function (pt) { if (!pt.marker) return; visible(pt) ? groups[pt.category].addLayer(pt.marker) : groups[pt.category].removeLayer(pt.marker); });
+    // The selected point stays on the map even when a filter would hide it (e.g. opened from a shared link).
+    points.forEach(function (pt) { if (!pt.marker) return; visible(pt) || (current && current.item === pt) ? groups[pt.category].addLayer(pt.marker) : groups[pt.category].removeLayer(pt.marker); });
   }
   function renderLayers() {
     var box = $('layers'); box.textContent = '';
     box.appendChild(el('h3', 'Layers'));
     Object.keys(CATS).forEach(function (c) {
-      var n = points.filter(function (pt) { return pt.category === c && visible(pt); }).length;
+      var inCat = points.filter(function (pt) { return pt.category === c && spoilerOk(pt); });
+      var n = inCat.filter(isFound).length + '/' + inCat.length;
       if (!groups[c]) return;
       var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'layer-' + c; cb.checked = !!layerOn[c];
       cb.onchange = function () { layerOn[c] = cb.checked; prefs.set('layers', layerOn); applyLayers(); };
       var dot = el('span', null, 'dot'); dot.style.background = 'var(--c-' + c + ')';
-      lab.appendChild(cb); lab.appendChild(dot); lab.appendChild(el('span', CATS[c].label)); lab.appendChild(el('span', String(n), 'cnt'));
+      lab.appendChild(cb); lab.appendChild(dot); lab.appendChild(el('span', CATS[c].label)); var cnt = el('span', n, 'cnt'); cnt.title = 'Found / total'; lab.appendChild(cnt);
       box.appendChild(lab);
     });
-    if (points.some(function (pt) { return pt.spoiler; })) {
-      box.appendChild(el('div', null, 'sep'));
-      var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'layer-spoilers'; cb.checked = spoilers;
-      cb.onchange = function () { spoilers = cb.checked; prefs.set('spoilers', spoilers); applyLayers(); renderLayers(); if (current && current.kind === 'point' && !visible(current.item)) closeCard(); };
-      lab.appendChild(cb); lab.appendChild(el('span')); lab.appendChild(el('span', 'Show spoilers')); lab.appendChild(el('span'));
+    box.appendChild(el('div', null, 'sep'));
+    var opt = function (id, text, on, change) {
+      var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = id; cb.checked = on;
+      cb.onchange = function () { change(cb.checked); applyLayers(); renderLayers(); };
+      lab.appendChild(cb); lab.appendChild(el('span')); lab.appendChild(el('span', text)); lab.appendChild(el('span'));
       box.appendChild(lab);
-    }
+    };
+    opt('layer-hide-found', 'Hide found', hideFound, function (v) { hideFound = v; prefs.set('hideFound', v); });
+    if (points.some(function (pt) { return pt.spoiler; })) opt('layer-spoilers', 'Show spoilers', spoilers, function (v) { spoilers = v; prefs.set('spoilers', v); });
   }
   $('layers-btn').onclick = function () {
     var open = $('layers').hidden;
@@ -225,13 +257,10 @@
     points.forEach(function (pt) {
       if (!groups[pt.category]) groups[pt.category] = L.layerGroup();
       if (layerOn[pt.category] == null) layerOn[pt.category] = true;
-      var d = el('div', CATS[pt.category].glyph, 'pt' + (pt.status === 'confirmed' ? '' : ' unconfirmed'));
-      d.style.background = 'var(--c-' + pt.category + ')';
-      pt.marker = L.marker(ll(pt.x, pt.y), { title: pt.title, alt: pt.title,
-        icon: L.divIcon({ className: '', html: d.outerHTML, iconSize: [28, 28], iconAnchor: [14, 14] }) });
+      pt.marker = L.marker(ll(pt.x, pt.y), { title: pt.title, alt: pt.title, icon: makeIcon(pt) });
       pt.marker.on('click', function () { showPoint(pt, false); });
     });
-    if (points.length) { $('layers-btn').hidden = false; applyLayers(); renderLayers(); }
+    if (points.length) { $('layers-btn').hidden = false; applyLayers(); renderLayers(); openFromHash(); }
   }
 
   // ---- Search over place names and layer points ----
@@ -242,7 +271,7 @@
     results.textContent = '';
     if (!t) { results.hidden = true; hits = []; return; }
     var pool = places.map(function (p) { return { kind: 'place', item: p, name: p.name, sub: PLACE_TYPES[p.type] + ' · ' + gridRef(p), hay: norm(p.name) }; })
-      .concat(points.filter(visible).map(function (pt) { return { kind: 'point', item: pt, name: pt.title, sub: CATS[pt.category].label + ' · ' + gridRef(pt), hay: norm(pt.title + ' ' + CATS[pt.category].label + ' ' + (pt.place || '') + ' ' + (pt.text || '')) }; }));
+      .concat(points.filter(spoilerOk).map(function (pt) { return { kind: 'point', item: pt, name: pt.title, sub: CATS[pt.category].label + ' · ' + gridRef(pt), hay: norm(pt.title + ' ' + CATS[pt.category].label + ' ' + (pt.place || '') + ' ' + (pt.text || '')) }; }));
     hits = pool.filter(function (h) { return h.hay.indexOf(t) !== -1; })
       .sort(function (a, b) { return (norm(a.name).indexOf(t) === 0 ? 0 : 1) - (norm(b.name).indexOf(t) === 0 ? 0 : 1) || (norm(a.name).indexOf(t) === -1 ? 1 : 0) - (norm(b.name).indexOf(t) === -1 ? 1 : 0) || a.name.localeCompare(b.name); })
       .slice(0, 8);
@@ -274,6 +303,7 @@
   var saved = prefs.get('pos', null);
   if (saved && typeof saved.x === 'number' && typeof saved.y === 'number' && inside(saved)) setMe(saved, false);
   window.addEventListener('resize', function () { map.invalidateSize(); });
+  window.addEventListener('hashchange', openFromHash);
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); }); }
   getJSON('data/places.json').then(function (d) { places = d; }).catch(function () { places = []; })
     .then(function () { return getJSON('data/points.json'); })
