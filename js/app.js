@@ -81,7 +81,7 @@
       });
     }
     $('locate').classList.toggle('on', !!p);
-    if (save) prefs.set('pos', p);
+    if (save) { prefs.set('pos', p); if (!remoteApply) linkSend(p); }
   }
   function setPlacing(on) {
     placing = on;
@@ -234,10 +234,7 @@
     opt('layer-hide-found', 'Hide found', hideFound, function (v) { hideFound = v; prefs.set('hideFound', v); });
     if (points.some(function (pt) { return pt.spoiler; })) opt('layer-spoilers', 'Show spoilers', spoilers, function (v) { spoilers = v; prefs.set('spoilers', v); });
   }
-  $('layers-btn').onclick = function () {
-    var open = $('layers').hidden;
-    $('layers').hidden = !open; $('layers-btn').setAttribute('aria-expanded', String(open));
-  };
+  $('layers-btn').onclick = function () { togglePanel('layers'); };
   function addPoints(raw) {
     var byName = {}; places.forEach(function (p) { byName[p.name.toLowerCase()] = p; });
     var stacks = {};
@@ -299,11 +296,157 @@
   });
   map.on('mousedown touchstart', function () { results.hidden = true; });
 
+  // ---- Link devices: the same position on a computer and a phone ----
+  // Peer-to-peer over WebRTC (PeerJS). One device hosts a room named by a short code; the others join it.
+  // The host relays between guests. Nothing is stored on a server.
+  var ROOM = 'liveblip-v1-', ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  var link = { role: null, code: null, peer: null, conns: [], status: 'idle', tries: 0 }, remoteApply = false;
+  function validCode(c) { return typeof c === 'string' && c.length === 6 && c.split('').every(function (ch) { return ALPHABET.indexOf(ch) !== -1; }); }
+  function cleanCode(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  function newCode() {
+    var a = new Uint32Array(6), out = '';
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    for (var i = 0; i < 6; i++) out += ALPHABET[a[i] % ALPHABET.length];
+    return out;
+  }
+  function loadPeer(cb) {
+    if (window.Peer) return cb();
+    var sc = document.createElement('script'); sc.src = 'vendor/peerjs/peerjs.min.js';
+    sc.onload = function () { cb(); }; sc.onerror = function () { cb(new Error('load')); };
+    document.head.appendChild(sc);
+  }
+  function posMsg(p) { return p ? { t: 'pos', x: Math.round(p.x), y: Math.round(p.y) } : { t: 'clear' }; }
+  function linkSend(p, except) {
+    link.conns.forEach(function (c) { if (c !== except && c.open) { try { c.send(posMsg(p)); } catch (e) {} } });
+  }
+  function onRemote(d, from) {
+    if (!d || typeof d !== 'object') return;
+    var p = null;
+    if (d.t === 'pos' && typeof d.x === 'number' && typeof d.y === 'number' && inside(d)) p = { x: d.x, y: d.y };
+    else if (d.t !== 'clear') return;
+    remoteApply = true; setMe(p, true); remoteApply = false;
+    if (current && current.kind === 'me' && !p) closeCard(); else refreshCard();
+    if (link.role === 'host') linkSend(p, from);          // relay to the other guests
+  }
+  function addConn(c) {
+    c.on('open', function () {
+      link.conns.push(c); link.tries = 0;
+      if (link.role === 'host') { try { c.send(posMsg(mePos)); } catch (e) {} } else link.status = 'linked';
+      renderLink();
+    });
+    c.on('data', function (d) { onRemote(d, c); });
+    var gone = function () {
+      var i = link.conns.indexOf(c); if (i !== -1) link.conns.splice(i, 1);
+      if (link.role === 'guest' && link.peer) { link.status = 'reconnecting'; retryGuest(); }
+      renderLink();
+    };
+    c.on('close', gone); c.on('error', gone);
+  }
+  function retryGuest() {
+    if (link.role !== 'guest' || !link.peer || link.conns.length) return;
+    if (++link.tries > 20) { link.status = 'notfound'; renderLink(); return; }
+    setTimeout(function () {
+      if (link.role !== 'guest' || !link.peer || link.conns.length) return;
+      if (link.peer.disconnected && !link.peer.destroyed) { try { link.peer.reconnect(); } catch (e) {} }
+      try { addConn(link.peer.connect(ROOM + link.code, { reliable: true })); } catch (e) {}
+    }, 3000);
+  }
+  function startLink(role, code) {
+    stopLink(true);
+    link.role = role; link.code = code; link.status = 'connecting'; link.tries = 0;
+    prefs.set('link', { role: role, code: code }); renderLink();
+    loadPeer(function (err) {
+      if (link.role !== role || link.code !== code) return;
+      if (err) { link.status = 'loaderror'; renderLink(); return; }
+      var peer = link.peer = role === 'host' ? new Peer(ROOM + code, { debug: 0 }) : new Peer({ debug: 0 });
+      peer.on('open', function () {
+        if (role === 'host') { link.status = 'hosting'; renderLink(); }
+        else addConn(peer.connect(ROOM + code, { reliable: true }));
+      });
+      peer.on('connection', function (c) { if (role === 'host') addConn(c); else c.close(); });
+      peer.on('disconnected', function () { if (link.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} } });
+      peer.on('error', function (e) {
+        if (link.peer !== peer) return;
+        if (e.type === 'peer-unavailable') { link.status = link.tries ? 'reconnecting' : 'notfound'; if (link.tries) retryGuest(); }
+        else if (e.type === 'unavailable-id') link.status = 'taken';
+        else if (!link.conns.length) link.status = 'neterror';
+        renderLink();
+      });
+    });
+  }
+  function stopLink(keepPref) {
+    if (link.peer) { try { link.peer.destroy(); } catch (e) {} }
+    link = { role: null, code: null, peer: null, conns: [], status: 'idle', tries: 0 };
+    if (!keepPref) prefs.set('link', null);
+    renderLink();
+  }
+  function renderLink() {
+    var box = $('link'), btn = $('link-btn');
+    btn.classList.toggle('on', link.conns.length > 0);
+    box.textContent = '';
+    box.appendChild(el('h3', 'Link devices'));
+    var actions = function (list) {
+      var a = el('div', null, 'actions');
+      list.forEach(function (b) { var n = el('button', b[0], 'btn' + (b[2] ? ' primary' : '')); n.type = 'button'; n.onclick = b[1]; a.appendChild(n); });
+      box.appendChild(a);
+    };
+    var failed = { loaderror: 'Could not load the linking module. Check your connection and try again.',
+      neterror: 'Could not reach the linking service. Try again in a moment.',
+      taken: 'That code is already open in another tab or device.',
+      notfound: 'No device is sharing the code ' + link.code + '. Check the code on the other device.' }[link.status];
+    if (!link.role || failed) {
+      if (failed) box.appendChild(el('p', failed, 'err'));
+      box.appendChild(el('p', 'Show the same position on your computer and your phone.'));
+      actions([['Create a code', function () { startLink('host', newCode()); }, true]]);
+      box.appendChild(el('p', 'Or enter the code shown on your other device:', 'note'));
+      var form = el('form', null, 'join'), inp = el('input'), go = el('button', 'Join', 'btn');
+      inp.id = 'link-code'; inp.type = 'text'; inp.maxLength = 7; inp.autocomplete = 'off'; inp.spellcheck = false;
+      inp.placeholder = 'CODE'; inp.setAttribute('aria-label', 'Code from your other device'); inp.setAttribute('autocapitalize', 'characters');
+      go.type = 'submit';
+      form.onsubmit = function (e) {
+        e.preventDefault();
+        var c = cleanCode(inp.value);
+        if (validCode(c)) startLink('guest', c); else { inp.value = ''; inp.placeholder = '6 characters'; inp.focus(); }
+      };
+      form.appendChild(inp); form.appendChild(go); box.appendChild(form);
+    } else if (link.role === 'host') {
+      box.appendChild(el('p', 'Your code', 'note'));
+      box.appendChild(el('div', link.code, 'code'));
+      var n = link.conns.length;
+      box.appendChild(el('p', link.status === 'connecting' ? 'Starting…' : n === 0 ? 'Waiting for another device…' : n === 1 ? '1 device linked' : n + ' devices linked', 'status' + (n ? ' ok' : '')));
+      box.appendChild(el('p', 'On the other device, open liveblip.com, tap Link devices and enter the code.', 'note'));
+      actions([['Copy link', function () {
+        var url = location.origin + location.pathname + '?link=' + link.code, b = this;
+        try { navigator.clipboard.writeText(url).then(function () { b.textContent = 'Link copied'; }, function () { b.textContent = url; }); } catch (e) { b.textContent = url; }
+      }], ['Stop', function () { stopLink(); }]]);
+    } else {
+      box.appendChild(el('p', link.status === 'linked' ? 'Linked with code ' + link.code : link.status === 'reconnecting' ? 'Connection lost. Reconnecting…' : 'Connecting to ' + link.code + '…', 'status' + (link.status === 'linked' ? ' ok' : '')));
+      actions([['Leave', function () { stopLink(); }]]);
+    }
+    box.appendChild(el('p', 'Positions are sent only between your linked devices and are not stored.', 'note'));
+  }
+  function togglePanel(id) {
+    ['layers', 'link'].forEach(function (k) {
+      var open = k === id && $(k).hidden;
+      $(k).hidden = !open; $(k + '-btn').setAttribute('aria-expanded', String(open));
+    });
+  }
+  $('link-btn').onclick = function () { togglePanel('link'); };
+
   // ---- Start ----
   var saved = prefs.get('pos', null);
   if (saved && typeof saved.x === 'number' && typeof saved.y === 'number' && inside(saved)) setMe(saved, false);
   window.addEventListener('resize', function () { map.invalidateSize(); });
   window.addEventListener('hashchange', openFromHash);
+  renderLink();
+  (function () {
+    var q = '', stored = prefs.get('link', null);
+    try { q = cleanCode(new URLSearchParams(location.search).get('link')); } catch (e) {}
+    if (validCode(q)) {
+      try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+      startLink('guest', q); togglePanel('link');
+    } else if (stored && validCode(stored.code) && (stored.role === 'host' || stored.role === 'guest')) startLink(stored.role, stored.code);
+  })();
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); }); }
   getJSON('data/places.json').then(function (d) { places = d; }).catch(function () { places = []; })
     .then(function () { return getJSON('data/points.json'); })

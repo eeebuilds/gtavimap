@@ -115,17 +115,19 @@ svg.leaflet-zoom-animated{will-change:transform}
 
 #bottom { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
 #readout { display: flex; flex-direction: column; gap: 6px; align-items: start; flex: 1; min-width: 0; }
-#grid { padding: 4px 10px; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .04em; border-radius: 7px; }
+#grid { white-space: nowrap; padding: 4px 10px; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .04em; border-radius: 7px; }
 #grid span { color: var(--muted); font-weight: 500; }
 #scale { pointer-events: none; color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 40, 55, .8); font-variant-numeric: tabular-nums; }
 #scale i { display: block; height: 6px; border: 2px solid #fff; border-top: 0; box-shadow: 0 1px 2px rgba(0, 40, 55, .5); margin-top: 2px; }
 #credit { pointer-events: none; color: #fff; font-size: 11px; text-shadow: 0 1px 2px rgba(0, 40, 55, .9); max-width: 46ch; }
-#controls { display: flex; flex-direction: column; gap: 8px; align-items: end; }
+#controls { display: flex; flex-direction: column; gap: 8px; align-items: end; position: relative; }
+/* Panels float above the buttons so opening one does not squeeze the readouts beside them. */
+#layers, #link { position: absolute; right: 0; bottom: calc(100% + 8px); max-height: min(60vh, 420px); overflow-y: auto; }
 #controls .stack { display: flex; flex-direction: column; overflow: hidden; }
 #controls .stack > button { width: 44px; height: 44px; border: 0; background: transparent; color: var(--fg); cursor: pointer; display: grid; place-items: center; }
 #controls .stack > button:hover { background: var(--surface-2); }
 #controls .stack > button + button { border-top: 1px solid var(--line); }
-#locate.on, #layers-btn[aria-expanded="true"] { color: var(--accent); }
+#locate.on, #link-btn.on, #layers-btn[aria-expanded="true"], #link-btn[aria-expanded="true"] { color: var(--accent); }
 button:focus-visible, #q:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Layer list */
@@ -136,6 +138,19 @@ button:focus-visible, #q:focus-visible, input:focus-visible { outline: 2px solid
 #layers .cnt { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
 #layers .sep { border-top: 1px solid var(--line); margin: 4px 0; }
 #layers .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 40, 55, .4); box-sizing: border-box; }
+
+/* Link devices */
+#link { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; width: min(290px, calc(100vw - 32px)); box-sizing: border-box; }
+#link h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; }
+#link p { margin: 0; }
+#link .note { color: var(--muted); font-size: 13px; }
+#link .err { color: var(--warn); font-weight: 500; }
+#link .status { font-weight: 600; }
+#link .status.ok { color: var(--ok); }
+#link .code { font-family: var(--font-display); font-weight: 700; font-size: 38px; line-height: 1; letter-spacing: .14em; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; }
+#link .actions, #link .join { display: flex; flex-wrap: wrap; gap: 8px; }
+#link .join input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--fg);
+  font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: .14em; text-transform: uppercase; }
 
 /* Markers */
 .me { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(0, 40, 55, .35), 0 2px 8px rgba(0, 0, 0, .45); box-sizing: border-box; position: relative; }

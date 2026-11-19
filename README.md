@@ -12,8 +12,11 @@ The site is static: no build step, no server. Serve the repository root with any
 - Grid squares A–M / 1–9 and a scale in miles, both taken from the map's own grid and legend.
 - "My position": a marker you set by hand. Stored in your own browser only.
 - Layers for hidden missions, money, easter eggs, trivia, collectibles and shops, with a spoiler switch.
+- Found-tracking per point, a "Hide found" filter and a shareable link per point (`#point-id`).
+- Link devices: the position marker is shared between a computer and a phone through a six-character code.
+  It runs peer-to-peer over WebRTC (PeerJS and its public signalling server); nothing is stored on a server.
 
-Not built yet: live position (reading the in-game minimap), platform choice, pairing a computer with a phone.
+Not built yet: live position (reading the in-game minimap) and platform choice.
 
 ## Rule: no point without a source
 
@@ -54,4 +57,5 @@ Rockstar Games or Take-Two Interactive.
 ## Other
 
 - Map engine: Leaflet 1.9.4 (`vendor/leaflet`, BSD-2 licence).
+- Device linking: PeerJS 1.5.4 (`vendor/peerjs`, MIT licence), loaded only when linking is used.
 - `scripts/make_preview.py` builds a single-file copy of the page for previews.
