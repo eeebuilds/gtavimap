@@ -131,6 +131,12 @@
     if (!current) return;
     if (current.kind === 'me') showMeCard(); else if (current.kind === 'place') showPlace(current.item, false); else showPoint(current.item, false);
   }
+  // On narrow screens the card covers the top of the map, so aim the target at the middle of what is left.
+  function flyToVisible(p, zoom, duration) {
+    var dy = window.innerWidth <= 560 && !card.hidden ? card.getBoundingClientRect().bottom / 2 : 0;
+    var c = map.project(ll(p.x, p.y), zoom).subtract([0, dy]);
+    map.flyTo(map.unproject(c, zoom), zoom, { duration: duration });
+  }
   function distRow(p) { return mePos ? ['From you', fmtDist(miles(p, mePos)) + ' in a straight line'] : null; }
   function posAction() { return mePos ? [] : [['Set my position', function () { closeCard(); setPlacing(true); }]]; }
 
@@ -139,7 +145,7 @@
     pin = L.marker(ll(p.x, p.y), { interactive: false, keyboard: false,
       icon: L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
     renderCard(p.name, [rows([['Type', PLACE_TYPES[p.type]], ['Grid', gridRef(p)], distRow(p)])], posAction());
-    if (fly) map.flyTo(ll(p.x, p.y), PLACE_ZOOM[p.type], { duration: 0.8 });
+    if (fly) flyToVisible(p, PLACE_ZOOM[p.type], 0.8);
   }
   function showMeCard() {
     clearSelection(); current = { kind: 'me' };
@@ -166,7 +172,7 @@
       pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area, not the exact spot.', 'note') : null,
       rows([['Grid', gridRef(pt)], distRow(pt), src ? ['Source', src] : null])
     ], posAction());
-    if (fly) map.flyTo(ll(pt.x, pt.y), pt.precision === 'area' ? 2.75 : 3.5, { duration: 0.8 });
+    if (fly) flyToVisible(pt, pt.precision === 'area' ? 2.75 : 3.5, 0.8);
   }
 
   // ---- Layers ----
