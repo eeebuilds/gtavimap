@@ -14,7 +14,7 @@
     trivia: { label: 'Trivia', glyph: '?' },
     collectible: { label: 'Collectibles', glyph: '+' },
     shop: { label: 'Shops', glyph: 'S' },
-    other: { label: 'Other', glyph: '·' }
+    other: { label: 'Useful spots', glyph: 'i' }
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -163,7 +163,7 @@
     renderCard(pt.title, [
       badges,
       el('p', pt.text),
-      pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area. The exact spot is not confirmed.', 'note') : null,
+      pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area, not the exact spot.', 'note') : null,
       rows([['Grid', gridRef(pt)], distRow(pt), src ? ['Source', src] : null])
     ], posAction());
     if (fly) map.flyTo(ll(pt.x, pt.y), pt.precision === 'area' ? 2.75 : 3.5, { duration: 0.8 });
@@ -210,8 +210,8 @@
         if (!anchor) return;
         pt.precision = 'area';
         // Several area-level points on the same place name fan out around its label instead of stacking.
-        var k = stacks[anchor.name] = (stacks[anchor.name] || 0) + 1, a = (k - 1) * 2.4, rad = k === 1 ? 0 : 70 + 12 * k;
-        pt.x = anchor.x + Math.cos(a) * rad; pt.y = anchor.y + 46 + Math.sin(a) * rad;
+        var k = stacks[anchor.name] = (stacks[anchor.name] || 0) + 1, a = (k - 1) * 2.4, rad = 46 * Math.sqrt(k - 1);
+        pt.x = anchor.x + Math.cos(a) * rad; pt.y = anchor.y + 40 + Math.sin(a) * rad;
       }
       if (!inside(pt)) return;
       points.push(pt);
