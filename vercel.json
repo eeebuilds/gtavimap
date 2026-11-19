@@ -1,0 +1,22 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "gtavimap-one.vercel.app" }],
+      "destination": "https://liveblip.com/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "liveblip.vercel.app" }],
+      "destination": "https://liveblip.com/:path*",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/tiles/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    }
+  ]
+}
