@@ -1,57 +1,57 @@
-# Leonidakartan
+# Leonida Map
 
-Inofficiell, interaktiv karta över Leonida i GTA VI. Fungerar i webbläsaren på dator och mobil.
+An unofficial, interactive map of Leonida in GTA VI. Runs in the browser on desktop and mobile.
 
-Sajten är statisk: inga byggsteg, ingen server. Öppna `index.html` via valfri webbserver
-(`python3 -m http.server`) eller publicera repots rot som den är.
+The site is static: no build step, no server. Serve the repository root with any web server
+(`python3 -m http.server`) or publish it as it is.
 
-## Vad som finns
+## What it does
 
-- Zoombar karta byggd på Rockstars officiella, utskrivbara Leonida-karta.
-- Sök bland platsnamn (`data/places.json`) och bland punkter i lagren (`data/points.json`).
-- Kartrutor A–M / 1–9 och skala i miles, båda enligt kartans eget rutnät och teckenförklaring.
-- "Min position": en markör man sätter för hand. Sparas bara i den egna webbläsaren.
-- Lager för dolda uppdrag, pengar, påskägg, trivia, samlarobjekt och butiker, med spoilerskydd.
+- Zoomable map built on Rockstar's official printable Leonida map.
+- Search across place names (`data/places.json`) and layer points (`data/points.json`).
+- Grid squares A–M / 1–9 and a scale in miles, both taken from the map's own grid and legend.
+- "My position": a marker you set by hand. Stored in your own browser only.
+- Layers for hidden missions, money, easter eggs, trivia, collectibles and shops, with a spoiler switch.
 
-Inte byggt än: liveposition (avläsning av spelets minikarta), plattformsval och hopkoppling dator–mobil.
+Not built yet: live position (reading the in-game minimap), platform choice, pairing a computer with a phone.
 
-## Regel: ingen punkt utan källa
+## Rule: no point without a source
 
-Varje punkt i `data/points.json` ska gå att spåra till en publicerad källa. Sajten visar inte punkter
-som saknar källa, och `python3 scripts/check_points.py` stoppar dem.
+Every point in `data/points.json` must trace back to a published source. The site does not show
+points without one, and `python3 scripts/check_points.py` rejects them.
 
 ```json
 {
-  "id": "kort-unikt-id",
-  "title": "Rubrik",
+  "id": "short-unique-id",
+  "title": "Title",
   "category": "mission | money | easter_egg | trivia | collectible | shop | other",
-  "text": "Vad källan säger, på svenska. Inget utöver källan.",
-  "place": "Namn ur data/places.json",
+  "text": "What the source says. Nothing beyond the source.",
+  "place": "A name from data/places.json",
   "x": 3668, "y": 3913,
   "status": "confirmed | unconfirmed",
   "spoiler": false,
-  "source": { "name": "Utgivare", "url": "https://…", "quote": "Stycket som belägger punkten, ordagrant." },
+  "source": { "name": "Publisher", "url": "https://…", "quote": "The passage that supports the point, verbatim." },
   "added": "2026-11-20"
 }
 ```
 
-- `x`/`y` är pixlar i den beskurna kartbilden (5378 × 7502). Ange dem bara när den exakta platsen är belagd.
-  Utan `x`/`y` placeras punkten vid platsnamnet i `place` och visas som "området", inte som exakt plats.
-- `status` är `confirmed` först när en etablerad källa har bekräftat fyndet i det släppta spelet.
-  Rykten, läckor och trailertolkningar läggs inte in alls.
-- `spoiler: true` döljer punkten tills besökaren själv slår på "Visa spoilers".
-- Kopiera inte andra sajters markörsamlingar. Enskilda fakta med egen källa går bra.
+- `x`/`y` are pixels in the cropped map image (5378 × 7502). Set them only when the exact spot is documented.
+  Without `x`/`y` the point sits at the place name in `place` and is shown as "the area", not an exact spot.
+- `status` is `confirmed` only when an established source has verified the find in the released game.
+  Rumours, leaks and trailer readings are not added at all.
+- `spoiler: true` hides the point until the visitor turns on "Show spoilers".
+- Do not copy other sites' marker collections. Individual facts with their own source are fine.
 
-## Kartbilden
+## The map image
 
-`tiles/` är skuren ur Rockstars egen nedladdning ("Leonida Map – Printable" på rockstargames.com/VI/downloads).
-Bygg om med `python3 scripts/build_tiles.py Leonida_Map_Poster_Printable.jpg` (kräver Pillow).
-Platsnamnen i `data/places.json` är avlästa från samma karta; koordinaten är etikettens mitt.
+`tiles/` is cut from Rockstar's own download ("Leonida Map – Printable" at rockstargames.com/VI/downloads).
+Rebuild with `python3 scripts/build_tiles.py Leonida_Map_Poster_Printable.jpg` (needs Pillow).
+The names in `data/places.json` are read off the same map; each coordinate is the centre of the label.
 
-Kartbilden tillhör Rockstar Games. Projektet är ett fanprojekt och har ingen koppling till
-Rockstar Games eller Take-Two Interactive.
+The map image belongs to Rockstar Games. This is a fan project with no connection to
+Rockstar Games or Take-Two Interactive.
 
-## Övrigt
+## Other
 
-- Kartmotor: Leaflet 1.9.4 (`vendor/leaflet`, BSD-2-licens).
-- `scripts/make_preview.py` bygger en enfilsvariant av sidan för förhandsvisning.
+- Map engine: Leaflet 1.9.4 (`vendor/leaflet`, BSD-2 licence).
+- `scripts/make_preview.py` builds a single-file copy of the page for previews.

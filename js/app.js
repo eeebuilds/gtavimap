@@ -4,17 +4,17 @@
   var W = 5378, H = 7502, UNIT = 8;          // one map unit = 8 full-size px (zoom 3 is full size)
   var PX_PER_MILE = 600;                     // the map's own legend: 2 inches = 1 mile at 300 dpi
   var GRID_X0 = 589, GRID_Y0 = 449;          // first grid line inside the frame; lines repeat every 600 px
-  var PLACE_TYPES = { county: 'County', town: 'Ort', area: 'Område', place: 'Plats', nature: 'Natur', island: 'Ö' };
+  var PLACE_TYPES = { county: 'County', town: 'Town', area: 'Area', place: 'Landmark', nature: 'Nature', island: 'Island' };
   var PLACE_ZOOM = { county: 1, town: 2.5, area: 3, place: 3.25, nature: 2.25, island: 2.75 };
   // Layers for data/points.json. Order here is the order in the layer list.
   var CATS = {
-    mission: { label: 'Dolda uppdrag', glyph: '!' },
-    money: { label: 'Pengar', glyph: '$' },
-    easter_egg: { label: 'Påskägg', glyph: '*' },
+    mission: { label: 'Hidden missions', glyph: '!' },
+    money: { label: 'Money', glyph: '$' },
+    easter_egg: { label: 'Easter eggs', glyph: '*' },
     trivia: { label: 'Trivia', glyph: '?' },
-    collectible: { label: 'Samlarobjekt', glyph: '+' },
-    shop: { label: 'Butiker', glyph: 'B' },
-    other: { label: 'Övrigt', glyph: '·' }
+    collectible: { label: 'Collectibles', glyph: '+' },
+    shop: { label: 'Shops', glyph: 'S' },
+    other: { label: 'Other', glyph: '·' }
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -35,7 +35,7 @@
   }
   function miles(a, b) { return Math.hypot(a.x - b.x, a.y - b.y) / PX_PER_MILE; }
   function fmtDist(mi) {
-    var f = function (n) { return n.toFixed(n < 10 ? 1 : 0).replace('.', ','); };
+    var f = function (n) { return n.toFixed(n < 10 ? 1 : 0); };
     return f(mi) + ' mi (' + f(mi * 1.609344) + ' km)';
   }
 
@@ -57,7 +57,7 @@
     var steps = [0.05, 0.1, 0.25, 0.5, 1, 2, 5], pick = steps[0];
     for (var i = 0; i < steps.length; i++) if (steps[i] * pxPerMile <= 130) pick = steps[i];
     $('scale-bar').style.width = Math.round(pick * pxPerMile) + 'px';
-    $('scale-txt').textContent = String(pick).replace('.', ',') + ' mi';
+    $('scale-txt').textContent = pick + ' mi';
   }
   map.on('zoom', drawScale);
   drawScale(); showGrid(map.getCenter());
@@ -106,7 +106,7 @@
   function renderCard(title, parts, actions) {
     card.textContent = '';
     var head = el('div', null, 'head'); head.appendChild(el('h2', title));
-    var x = el('button', null, 'icon-btn'); x.type = 'button'; x.setAttribute('aria-label', 'Stäng');
+    var x = el('button', null, 'icon-btn'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
     x.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     x.onclick = closeCard; head.appendChild(x); card.appendChild(head);
     parts.forEach(function (n) { if (n) card.appendChild(n); });
@@ -131,21 +131,21 @@
     if (!current) return;
     if (current.kind === 'me') showMeCard(); else if (current.kind === 'place') showPlace(current.item, false); else showPoint(current.item, false);
   }
-  function distRow(p) { return mePos ? ['Från dig', fmtDist(miles(p, mePos)) + ' fågelvägen'] : null; }
-  function posAction() { return mePos ? [] : [['Sätt min position', function () { closeCard(); setPlacing(true); }]]; }
+  function distRow(p) { return mePos ? ['From you', fmtDist(miles(p, mePos)) + ' in a straight line'] : null; }
+  function posAction() { return mePos ? [] : [['Set my position', function () { closeCard(); setPlacing(true); }]]; }
 
   function showPlace(p, fly) {
     clearSelection(); current = { kind: 'place', item: p };
     pin = L.marker(ll(p.x, p.y), { interactive: false, keyboard: false,
       icon: L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
-    renderCard(p.name, [rows([['Typ', PLACE_TYPES[p.type]], ['Ruta', gridRef(p)], distRow(p)])], posAction());
+    renderCard(p.name, [rows([['Type', PLACE_TYPES[p.type]], ['Grid', gridRef(p)], distRow(p)])], posAction());
     if (fly) map.flyTo(ll(p.x, p.y), PLACE_ZOOM[p.type], { duration: 0.8 });
   }
   function showMeCard() {
     clearSelection(); current = { kind: 'me' };
-    renderCard('Din position', [rows([['Ruta', gridRef(mePos)], ['Sparas', 'bara i den här webbläsaren']])], [
-      ['Flytta', function () { closeCard(); setPlacing(true); }, true],
-      ['Ta bort', function () { setMe(null, true); closeCard(); }]
+    renderCard('Your position', [rows([['Grid', gridRef(mePos)], ['Saved', 'in this browser only']])], [
+      ['Move', function () { closeCard(); setPlacing(true); }, true],
+      ['Remove', function () { setMe(null, true); closeCard(); }]
     ]);
   }
   function setSel(pt, on) { var n = pt.marker && pt.marker.getElement(); if (n && n.firstChild) n.firstChild.classList.toggle('sel', on); }
@@ -155,7 +155,7 @@
     setSel(pt, true);
     var badges = el('div', null, 'badges');
     badges.appendChild(el('span', CATS[pt.category].label, 'badge cat'));
-    badges.appendChild(pt.status === 'confirmed' ? el('span', 'Bekräftad', 'badge ok') : el('span', 'Obekräftad', 'badge warn'));
+    badges.appendChild(pt.status === 'confirmed' ? el('span', 'Confirmed', 'badge ok') : el('span', 'Unconfirmed', 'badge warn'));
     var src = null;
     if (pt.source && /^https:\/\//.test(pt.source.url || '')) {
       src = el('a', pt.source.name || pt.source.url); src.href = pt.source.url; src.target = '_blank'; src.rel = 'noopener noreferrer';
@@ -163,8 +163,8 @@
     renderCard(pt.title, [
       badges,
       el('p', pt.text),
-      pt.precision === 'area' ? el('p', 'Markören visar området' + (pt.place ? ' ' + pt.place : '') + '. Den exakta platsen är inte belagd.', 'note') : null,
-      rows([['Ruta', gridRef(pt)], distRow(pt), src ? ['Källa', src] : null])
+      pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area. The exact spot is not confirmed.', 'note') : null,
+      rows([['Grid', gridRef(pt)], distRow(pt), src ? ['Source', src] : null])
     ], posAction());
     if (fly) map.flyTo(ll(pt.x, pt.y), pt.precision === 'area' ? 2.75 : 3.5, { duration: 0.8 });
   }
@@ -178,7 +178,7 @@
   }
   function renderLayers() {
     var box = $('layers'); box.textContent = '';
-    box.appendChild(el('h3', 'Lager'));
+    box.appendChild(el('h3', 'Layers'));
     Object.keys(CATS).forEach(function (c) {
       var n = points.filter(function (pt) { return pt.category === c && visible(pt); }).length;
       if (!groups[c]) return;
@@ -192,7 +192,7 @@
       box.appendChild(el('div', null, 'sep'));
       var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'layer-spoilers'; cb.checked = spoilers;
       cb.onchange = function () { spoilers = cb.checked; prefs.set('spoilers', spoilers); applyLayers(); renderLayers(); if (current && current.kind === 'point' && !visible(current.item)) closeCard(); };
-      lab.appendChild(cb); lab.appendChild(el('span')); lab.appendChild(el('span', 'Visa spoilers')); lab.appendChild(el('span'));
+      lab.appendChild(cb); lab.appendChild(el('span')); lab.appendChild(el('span', 'Show spoilers')); lab.appendChild(el('span'));
       box.appendChild(lab);
     }
   }
@@ -241,7 +241,7 @@
       .sort(function (a, b) { return (norm(a.name).indexOf(t) === 0 ? 0 : 1) - (norm(b.name).indexOf(t) === 0 ? 0 : 1) || (norm(a.name).indexOf(t) === -1 ? 1 : 0) - (norm(b.name).indexOf(t) === -1 ? 1 : 0) || a.name.localeCompare(b.name); })
       .slice(0, 8);
     active = 0;
-    if (!hits.length) results.appendChild(el('li', 'Inget på kartan matchar sökningen.', 'none'));
+    if (!hits.length) results.appendChild(el('li', 'Nothing on the map matches that search.', 'none'));
     hits.forEach(function (h, i) {
       var li = el('li'), b = el('button', null, i === 0 ? 'active' : ''); b.type = 'button';
       b.appendChild(el('span', h.name, 'nm')); b.appendChild(el('span', h.sub, 'ty'));

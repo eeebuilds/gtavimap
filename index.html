@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="sv">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Leonidakartan</title>
-<meta name="description" content="Inofficiell karta över Leonida i GTA VI: sök platser, hitta dolda uppdrag, pengar och trivia.">
+<title>Leonida Map</title>
+<meta name="description" content="Unofficial interactive map of Leonida in GTA VI: search places and find hidden missions, money and trivia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -13,36 +13,36 @@
 <body>
 <!-- app:start -->
 <div id="app">
-  <div id="map" tabindex="0" aria-label="Karta över Leonida"></div>
+  <div id="map" tabindex="0" aria-label="Map of Leonida"></div>
   <div id="ui">
     <div id="top">
       <label id="search" class="panel">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
-        <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Sök plats, uppdrag eller fynd" aria-label="Sök plats, uppdrag eller fynd">
+        <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search places, missions and finds" aria-label="Search places, missions and finds">
       </label>
       <ul id="results" class="panel" hidden></ul>
       <section id="card" class="panel" hidden></section>
     </div>
-    <div id="hint" class="panel" hidden><span>Tryck på kartan där du är</span><button id="hint-cancel" type="button">Avbryt</button></div>
+    <div id="hint" class="panel" hidden><span>Tap the map where you are</span><button id="hint-cancel" type="button">Cancel</button></div>
     <div id="bottom">
       <div id="readout">
         <div id="scale"><span id="scale-txt"></span><i id="scale-bar"></i></div>
-        <div id="grid" class="panel" title="Kartruta enligt den officiella kartans rutnät"><span>Ruta</span> <b id="grid-ref">–</b></div>
-        <div id="credit">Inofficiell fankarta, inte knuten till Rockstar Games eller Take-Two. Kartbild © Rockstar Games.</div>
+        <div id="grid" class="panel" title="Grid square on the official map"><span>Grid</span> <b id="grid-ref">–</b></div>
+        <div id="credit">Unofficial fan map. Not affiliated with Rockstar Games or Take-Two. Map image © Rockstar Games.</div>
       </div>
       <div id="controls">
-        <section id="layers" class="panel" hidden aria-label="Lager"></section>
+        <section id="layers" class="panel" hidden aria-label="Layers"></section>
         <div class="panel stack">
-          <button id="layers-btn" type="button" aria-label="Lager" title="Lager" aria-expanded="false" hidden>
+          <button id="layers-btn" type="button" aria-label="Layers" title="Layers" aria-expanded="false" hidden>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
           </button>
-          <button id="locate" type="button" aria-label="Min position" title="Min position">
+          <button id="locate" type="button" aria-label="My position" title="My position">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg>
           </button>
         </div>
         <div class="panel stack">
-          <button id="zin" type="button" aria-label="Zooma in" title="Zooma in"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-          <button id="zout" type="button" aria-label="Zooma ut" title="Zooma ut"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button id="zin" type="button" aria-label="Zoom in" title="Zoom in"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button id="zout" type="button" aria-label="Zoom out" title="Zoom out"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
         </div>
       </div>
     </div>
