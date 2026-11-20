@@ -5,7 +5,8 @@ Usage: python3 scripts/check_points.py
 """
 import json, sys
 
-CATS = {"mission", "money", "easter_egg", "trivia", "collectible", "shop", "other"}
+CATS = {"mission", "money", "easter_egg", "trivia", "collectible", "shop", "other",
+        "gun_shop", "pay_n_spray", "mod_shop", "garage", "clothing", "tattoo", "hair"}
 W, H = 5378, 7502
 
 places = {p["name"].lower() for p in json.load(open("data/places.json", encoding="utf-8"))}

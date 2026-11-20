@@ -13,9 +13,19 @@
     easter_egg: { label: 'Easter eggs', glyph: '*' },
     trivia: { label: 'Trivia', glyph: '?' },
     collectible: { label: 'Collectibles', glyph: '+' },
-    shop: { label: 'Shops', glyph: 'S' },
-    other: { label: 'Useful spots', glyph: 'i' }
+    shop: { label: 'Other stores', glyph: 'S' },
+    other: { label: 'Useful spots', glyph: 'i' },
+    // Shops and services: drawn smaller, and only once the map is zoomed in to SHOP_ZOOM.
+    // `total` is the number of locations the cited guide counts; the list says so while a layer is incomplete.
+    gun_shop: { label: 'Gun stores', svc: true, total: 24, icon: '<path d="M2 7h18v4h-6.5c-.6 0-1 .4-1.2 1l-.6 2H8.5L7 19H3l1.5-8H2z"/>' },
+    pay_n_spray: { label: "Pay 'n' Spray", svc: true, total: 19, icon: '<path d="M8 9h7v12H8z"/><path d="M9.5 5.5h4V8h-4z"/><path d="M16.5 4.5h1.5v1.5h-1.5zM19 3h1.5v1.5H19zM19 6h1.5v1.5H19z"/>' },
+    mod_shop: { label: 'Mod shops', svc: true, icon: '<path d="M20.5 6.2l-3 3-2.7-.7-.7-2.7 3-3a5 5 0 00-6.300 6.200L3.500 16.300a2 2 0 002.800 2.800l7.300-7.300a5 5 0 006.900-5.600z"/>' },
+    garage: { label: 'Garages', svc: true, icon: '<path d="M3 10.5L12 4l9 6.500V20h-3v-7H6v7H3z"/><path d="M8 15h8v1.600H8zM8 18h8v2H8z"/>' },
+    clothing: { label: 'Clothing stores', svc: true, icon: '<path d="M8.500 3.500L12 5.500l3.500-2L21 7l-2.500 3.500-2-1V20h-9V9.500l-2 1L3 7z"/>' },
+    tattoo: { label: 'Tattoo studios', svc: true, glyph: 'T' },
+    hair: { label: 'Hair & beauty', svc: true, icon: '<path d="M6.500 3a3 3 0 012.600 4.500L12 10.400l6.500-6.400h3L9.100 16.500A3 3 0 116.500 15c.5 0 1 .1 1.400.3L10.200 13 7.900 10.700A3 3 0 116.500 3zm0 2a1 1 0 100 2 1 1 0 000-2zm0 12a1 1 0 100 2 1 1 0 000-2zM14 13.800l1.800-1.800 5.700 5.700h-3z"/>' }
   };
+  var SHOP_ZOOM = 0.75;
 
   var $ = function (id) { return document.getElementById(id); };
   var ll = function (x, y) { return L.latLng(-y / UNIT, x / UNIT); };
@@ -60,6 +70,7 @@
     $('scale-txt').textContent = pick + ' mi';
   }
   map.on('zoom', drawScale);
+  map.on('zoomend', function () { if (points.length) applyLayers(); });
   drawScale(); showGrid(map.getCenter());
   $('zin').onclick = function () { map.zoomIn(); };
   $('zout').onclick = function () { map.zoomOut(); };
@@ -155,9 +166,11 @@
     ]);
   }
   function makeIcon(pt) {
-    var d = el('div', isFound(pt) ? '\u2713' : CATS[pt.category].glyph, 'pt' + (pt.status === 'confirmed' ? '' : ' unconfirmed') + (isFound(pt) ? ' found' : '') + (pt.sel ? ' sel' : ''));
+    var cat = CATS[pt.category], size = cat.svc ? 24 : 28;
+    var d = el('div', isFound(pt) ? '\u2713' : cat.icon ? null : cat.glyph, 'pt' + (cat.svc ? ' svc' : '') + (pt.status === 'confirmed' ? '' : ' unconfirmed') + (isFound(pt) ? ' found' : '') + (pt.sel ? ' sel' : ''));
+    if (cat.icon && !isFound(pt)) d.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + cat.icon + '</svg>';
     d.style.background = 'var(--c-' + pt.category + ')';
-    return L.divIcon({ className: '', html: d.outerHTML, iconSize: [28, 28], iconAnchor: [14, 14] });
+    return L.divIcon({ className: '', html: d.outerHTML, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
   }
   function setSel(pt, on) { pt.sel = on; if (pt.marker) pt.marker.setIcon(makeIcon(pt)); }
   // Progress: which points this player has ticked off. Kept in this browser only.
@@ -194,6 +207,7 @@
       badges,
       el('p', pt.text),
       pt.precision === 'area' ? el('p', 'The marker shows the ' + (pt.place ? pt.place + ' ' : '') + 'area, not the exact spot.', 'note') : null,
+      pt.precision === 'map' ? el('p', 'Position taken from the in-game map.', 'note') : null,
       rows([['Grid', gridRef(pt)], distRow(pt), src ? ['Source', src] : null])
     ], [
       [isFound(pt) ? 'Found \u2713 (undo)' : 'Mark as found', function () { toggleFound(pt); }, !isFound(pt)],
@@ -207,21 +221,31 @@
   function spoilerOk(pt) { return spoilers || !pt.spoiler; }
   function visible(pt) { return spoilerOk(pt) && !(hideFound && isFound(pt)); }
   function applyLayers() {
-    Object.keys(groups).forEach(function (c) { layerOn[c] ? groups[c].addTo(map) : groups[c].remove(); });
+    var z = map.getZoom();
+    Object.keys(groups).forEach(function (c) { layerOn[c] && (!CATS[c].svc || z >= SHOP_ZOOM) ? groups[c].addTo(map) : groups[c].remove(); });
+    $('layers').classList.toggle('zoomed-out', z < SHOP_ZOOM);
     // The selected point stays on the map even when a filter would hide it (e.g. opened from a shared link).
     points.forEach(function (pt) { if (!pt.marker) return; visible(pt) || (current && current.item === pt) ? groups[pt.category].addLayer(pt.marker) : groups[pt.category].removeLayer(pt.marker); });
   }
   function renderLayers() {
     var box = $('layers'); box.textContent = '';
     box.appendChild(el('h3', 'Layers'));
+    var shopsHead = false;
     Object.keys(CATS).forEach(function (c) {
       var inCat = points.filter(function (pt) { return pt.category === c && spoilerOk(pt); });
       var n = inCat.filter(isFound).length + '/' + inCat.length;
       if (!groups[c]) return;
+      if (CATS[c].svc && !shopsHead) {
+        shopsHead = true;
+        box.appendChild(el('div', null, 'sep'));
+        var h = el('h3', 'Shops & services'); h.appendChild(el('span', 'zoom in to see', 'hint')); box.appendChild(h);
+      }
       var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'layer-' + c; cb.checked = !!layerOn[c];
       cb.onchange = function () { layerOn[c] = cb.checked; prefs.set('layers', layerOn); applyLayers(); };
-      var dot = el('span', null, 'dot'); dot.style.background = 'var(--c-' + c + ')';
-      lab.appendChild(cb); lab.appendChild(dot); lab.appendChild(el('span', CATS[c].label)); var cnt = el('span', n, 'cnt'); cnt.title = 'Found / total'; lab.appendChild(cnt);
+      var dot = el('span', null, 'dot' + (CATS[c].svc ? ' svc' : '')); dot.style.background = 'var(--c-' + c + ')';
+      var all = points.filter(function (pt) { return pt.category === c; }).length, name = el('span', CATS[c].label);
+      if (CATS[c].total && all < CATS[c].total) name.appendChild(el('span', ' ' + all + ' of ' + CATS[c].total + ' mapped', 'part'));
+      lab.appendChild(cb); lab.appendChild(dot); lab.appendChild(name); var cnt = el('span', n, 'cnt'); cnt.title = 'Found / total'; lab.appendChild(cnt);
       box.appendChild(lab);
     });
     box.appendChild(el('div', null, 'sep'));

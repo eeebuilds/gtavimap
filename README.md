@@ -12,6 +12,8 @@ The site is static: no build step, no server. Serve the repository root with any
 - Grid squares A–M / 1–9 and a scale in miles, both taken from the map's own grid and legend.
 - "My position": a marker you set by hand. Stored in your own browser only.
 - Layers for hidden missions, money, easter eggs, trivia, collectibles and shops, with a spoiler switch.
+- Shops and services (gun stores, Pay 'n' Spray so far) with exact positions. They appear once the map is zoomed in
+  and each layer can be switched off.
 - Found-tracking per point, a "Hide found" filter and a shareable link per point (`#point-id`).
 - Link devices: the position marker is shared between a computer and a phone through a six-character code.
   It runs peer-to-peer over WebRTC (PeerJS and its public signalling server); nothing is stored on a server.
@@ -27,7 +29,7 @@ points without one, and `python3 scripts/check_points.py` rejects them.
 {
   "id": "short-unique-id",
   "title": "Title",
-  "category": "mission | money | easter_egg | trivia | collectible | shop | other",
+  "category": "mission | money | easter_egg | trivia | collectible | shop | other | gun_shop | pay_n_spray | mod_shop | garage | clothing | tattoo | hair",
   "text": "What the source says. Nothing beyond the source.",
   "place": "A name from data/places.json",
   "x": 3668, "y": 3913,
@@ -40,6 +42,8 @@ points without one, and `python3 scripts/check_points.py` rejects them.
 
 - `x`/`y` are pixels in the cropped map image (5378 × 7502). Set them only when the exact spot is documented.
   Without `x`/`y` the point sits at the place name in `place` and is shown as "the area", not an exact spot.
+- `precision: "map"` marks a position read from a screenshot of the in-game map: the screenshot is matched to this
+  map image automatically and the icon's pointer is converted to map pixels (a pixel or two of error).
 - `status` is `confirmed` only when an established source has verified the find in the released game.
   Rumours, leaks and trailer readings are not added at all.
 - `spoiler: true` hides the point until the visitor turns on "Show spoilers".

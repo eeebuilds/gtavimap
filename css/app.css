@@ -20,6 +20,13 @@
   --c-shop: #33434b;
   --c-collectible: #b0399a;
   --c-other: #5a6b73;
+  --c-gun_shop: #9b2c2c;
+  --c-pay_n_spray: #c2337a;
+  --c-mod_shop: #2f6f4e;
+  --c-garage: #6b4f2a;
+  --c-clothing: #0b6b8f;
+  --c-tattoo: #3a3a44;
+  --c-hair: #a15c00;
   --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --radius: 10px;
@@ -122,7 +129,7 @@ svg.leaflet-zoom-animated{will-change:transform}
 #credit { pointer-events: none; color: #fff; font-size: 11px; text-shadow: 0 1px 2px rgba(0, 40, 55, .9); max-width: 46ch; }
 #controls { display: flex; flex-direction: column; gap: 8px; align-items: end; position: relative; }
 /* Panels float above the buttons so opening one does not squeeze the readouts beside them. */
-#layers, #link { position: absolute; right: 0; bottom: calc(100% + 8px); max-height: min(60vh, 420px); overflow-y: auto; }
+#layers, #link { position: absolute; right: 0; bottom: calc(100% + 8px); max-height: max(180px, calc(100vh - 350px)); max-height: max(180px, calc(100dvh - 350px)); overflow-y: auto; }
 #controls .stack { display: flex; flex-direction: column; overflow: hidden; }
 #controls .stack > button { width: 44px; height: 44px; border: 0; background: transparent; color: var(--fg); cursor: pointer; display: grid; place-items: center; }
 #controls .stack > button:hover { background: var(--surface-2); }
@@ -135,8 +142,12 @@ button:focus-visible, #q:focus-visible, input:focus-visible { outline: 2px solid
 #layers h3 { margin: 0 0 4px; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; }
 #layers label { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 9px; padding: 5px 2px; cursor: pointer; }
 #layers input { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); }
+#layers .part { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; }
 #layers .cnt { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
 #layers .sep { border-top: 1px solid var(--line); margin: 4px 0; }
+#layers .dot.svc { border-radius: 4px; }
+#layers h3 .hint { display: none; margin-left: 8px; font-family: var(--font-body); font-weight: 400; font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+#layers.zoomed-out h3 .hint { display: inline; }
 #layers .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 40, 55, .4); box-sizing: border-box; }
 
 /* Link devices */
@@ -160,6 +171,8 @@ button:focus-visible, #q:focus-visible, input:focus-visible { outline: 2px solid
 .pin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--label); box-shadow: 0 0 0 2px #0d2c3a, inset 0 0 0 2px #0d2c3a; box-sizing: border-box; }
 .pt { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 40, 55, .45), 0 2px 6px rgba(0, 0, 0, .4); box-sizing: border-box;
   display: grid; place-items: center; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1; }
+.pt.svc { width: 24px; height: 24px; border-radius: 7px; font-size: 15px; }
+.pt svg { display: block; }
 .pt.sel { box-shadow: 0 0 0 3px var(--label), 0 0 0 5px #0d2c3a; }
 .pt.unconfirmed { border-style: dashed; }
 .pt.found { opacity: .55; font-size: 16px; }
