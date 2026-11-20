@@ -79,20 +79,29 @@
   })();
   // The poster's own grid, carried on across the sea around it so the page reads as one sheet rather than a picture
   // on a plain background. Measured on the poster: a line every 600 px starting at x 589 and y 449, 2 px wide, white
-  // at about half strength. Drawn as thin rectangles in map px, so the lines grow with the zoom as the printed ones
-  // do, and as one shape with a non-zero fill, so crossings are not drawn twice.
+  // at about half strength. Drawn as one set of lines, so crossings are not drawn twice, whose width follows the
+  // zoom as the printed lines do. Zoomed out, a printed line is thinner than a screen pixel and shows as a faint
+  // one-pixel line, so below one pixel the width stays at one and the strength drops in proportion. (Thin rectangles
+  // would not do: Leaflet rounds their corners to whole pixels, which left some lines at full strength and
+  // dropped others.) Measured against the scaled-down tiles, this gives the lines the same weight as the poster's.
   (function () {
-    var FAR = 36000, STEP = 600, rects = [];
-    function rect(x0, y0, x1, y1) { rects.push([[ll(x0, y0), ll(x1, y0), ll(x1, y1), ll(x0, y1)]]); }
+    var FAR = 36000, STEP = 600, lines = [];
+    function line(x0, y0, x1, y1) { lines.push([ll(x0, y0), ll(x1, y1)]); }
     for (var x = 589 - 61 * STEP; x <= W + FAR; x += STEP) {
-      if (x < 0 || x > W) rect(x - 1, -FAR, x + 1, H + FAR);
-      else { rect(x - 1, -FAR, x + 1, 0); rect(x - 1, H, x + 1, H + FAR); }
+      if (x < 0 || x > W) line(x, -FAR, x, H + FAR);
+      else { line(x, -FAR, x, 0); line(x, H, x, H + FAR); }
     }
     for (var y = 449 - 61 * STEP; y <= H + FAR; y += STEP) {
-      if (y < 0 || y > H) rect(-FAR, y - 1, W + FAR, y + 1);
-      else { rect(-FAR, y - 1, 0, y + 1); rect(W, y - 1, W + FAR, y + 1); }
+      if (y < 0 || y > H) line(-FAR, y, W + FAR, y);
+      else { line(-FAR, y, 0, y); line(W, y, W + FAR, y); }
     }
-    L.polygon(rects, { stroke: false, fillColor: '#fff', fillOpacity: 0.54, fillRule: 'nonzero', interactive: false }).addTo(map);
+    var grid = L.polyline(lines, { color: '#fff', lineCap: 'butt', interactive: false }).addTo(map);
+    function restyle() {
+      var px = 2 * Math.pow(2, map.getZoom()) / UNIT;      // width of a printed line in screen px at this zoom
+      grid.setStyle({ weight: Math.max(1, px), opacity: 0.54 * Math.min(1, px) });
+    }
+    map.on('zoomend', restyle);
+    map.whenReady(restyle);
   })();
   map.fitBounds(bounds);
 
