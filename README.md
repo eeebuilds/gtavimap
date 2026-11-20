@@ -63,3 +63,4 @@ Rockstar Games or Take-Two Interactive.
 - Map engine: Leaflet 1.9.4 (`vendor/leaflet`, BSD-2 licence).
 - Device linking: PeerJS 1.5.4 (`vendor/peerjs`, MIT licence), loaded only when linking is used.
 - `scripts/make_preview.py` builds a single-file copy of the page for previews.
+- `scripts/mapshots.py` reads shop positions out of screenshots of the in-game map (needs `opencv-python-headless` and `numpy`).
