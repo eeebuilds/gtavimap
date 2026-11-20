@@ -64,6 +64,23 @@
     tileSize: 1024 >> zOff, zoomOffset: zOff, minNativeZoom: -zOff, maxNativeZoom: 5 - zOff,
     minZoom: -2, maxZoom: 5, bounds: bounds, noWrap: true, keepBuffer: 1
   }).addTo(map);
+  // The poster's own grid, carried on across the sea around it so the page reads as one sheet rather than a picture
+  // on a plain background. Measured on the poster: a line every 600 px starting at x 589 and y 449, 2 px wide, white
+  // at about half strength. Drawn as thin rectangles in map px, so the lines grow with the zoom as the printed ones
+  // do, and as one shape with a non-zero fill, so crossings are not drawn twice.
+  (function () {
+    var FAR = 36000, STEP = 600, rects = [];
+    function rect(x0, y0, x1, y1) { rects.push([[ll(x0, y0), ll(x1, y0), ll(x1, y1), ll(x0, y1)]]); }
+    for (var x = 589 - 61 * STEP; x <= W + FAR; x += STEP) {
+      if (x < 0 || x > W) rect(x - 1, -FAR, x + 1, H + FAR);
+      else { rect(x - 1, -FAR, x + 1, 0); rect(x - 1, H, x + 1, H + FAR); }
+    }
+    for (var y = 449 - 61 * STEP; y <= H + FAR; y += STEP) {
+      if (y < 0 || y > H) rect(-FAR, y - 1, W + FAR, y + 1);
+      else { rect(-FAR, y - 1, 0, y + 1); rect(W, y - 1, W + FAR, y + 1); }
+    }
+    L.polygon(rects, { stroke: false, fillColor: '#fff', fillOpacity: 0.54, fillRule: 'nonzero', interactive: false }).addTo(map);
+  })();
   map.fitBounds(bounds);
 
   // Readouts: grid square under the pointer (or the screen centre on touch) and a scale bar in the map's own miles.
