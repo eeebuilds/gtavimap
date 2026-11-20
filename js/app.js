@@ -55,7 +55,15 @@
     crs: L.CRS.Simple, minZoom: -1.25, maxZoom: 4.5, zoomSnap: 0.25, zoomDelta: 0.75, wheelPxPerZoomLevel: 90,
     attributionControl: false, zoomControl: false, maxBounds: bounds.pad(0.2), maxBoundsViscosity: 0.85
   });
-  L.tileLayer('tiles/{z}/{x}_{y}.jpg', { tileSize: 1024, minZoom: -2, maxZoom: 5, minNativeZoom: 0, maxNativeZoom: 3, bounds: bounds, noWrap: true, keepBuffer: 1 }).addTo(map);
+  // Leaflet picks the tile level from CSS pixels. On a high-density screen (Retina, Windows scaling above 100 %) that
+  // would stretch each tile over two or three times as many device pixels, so there we fetch one level sharper and
+  // draw it at half size (two levels, quarter size, above 2.2x) - Leaflet's detectRetina trick, kept inside our
+  // zoom 0-3 pyramid.
+  var dpr = window.devicePixelRatio || 1, zOff = dpr > 2.2 ? 2 : dpr > 1 ? 1 : 0;
+  L.tileLayer('tiles/{z}/{x}_{y}.jpg', {
+    tileSize: 1024 >> zOff, zoomOffset: zOff, minNativeZoom: -zOff, maxNativeZoom: 3 - zOff,
+    minZoom: -2, maxZoom: 5, bounds: bounds, noWrap: true, keepBuffer: 1
+  }).addTo(map);
   map.fitBounds(bounds);
 
   // Readouts: grid square under the pointer (or the screen centre on touch) and a scale bar in the map's own miles.
