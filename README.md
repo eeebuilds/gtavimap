@@ -12,7 +12,7 @@ The site is static: no build step, no server. Serve the repository root with any
 - Grid squares A–M / 1–9 and a scale in miles, both taken from the map's own grid and legend.
 - "My position": a marker you set by hand. Stored in your own browser only.
 - Layers for hidden missions, money, easter eggs, trivia, collectibles and shops, with a spoiler switch.
-- Shops and services (gun stores, Pay 'n' Spray so far) with exact positions. They appear once the map is zoomed in
+- Shops and services (gun stores, Pay 'n' Spray, mod shops, garages so far) with exact positions. They appear once the map is zoomed in
   and each layer can be switched off.
 - Found-tracking per point, a "Hide found" filter and a shareable link per point (`#point-id`).
 - Link devices: the position marker is shared between a computer and a phone through a six-character code.

@@ -33,16 +33,20 @@ Read `README.md` for what the site does and for the `data/points.json` schema.
 
 ## State on 2026-11-20
 
-Live: map, place search, 44 sourced finds (area-level positions), 23 of 24 gun stores and 5 of 19 Pay 'n' Sprays
-(exact positions), shop layers that appear when zoomed in, found-tracking, a link per point, and device linking
-(peer-to-peer through PeerJS's public server).
+Live: map, place search, 44 sourced finds (area-level positions), shops with exact positions (23 of 24 gun stores,
+16 of 19 Pay 'n' Sprays, 10 of 14 mod shops, 7 of 12 garages; all but the gun stores named), shop layers that appear
+when zoomed in, found-tracking, a link per point, and device linking (peer-to-peer through PeerJS's public server).
 
 Open, roughly in the owner's order of interest:
 
-1. **More shops.** Layers already exist for mod shops, garages, clothing, tattoo and hair; they need data. Missing:
-   14 Pay 'n' Sprays, 1 gun store, names for the gun stores, the 8 purchasable and 4 story garages, and every other
-   category. Needs pause-map screenshots with the category filter on. With one shop selected in the list the map
-   centres on it, which ties a name to a position (`mapshots.py --selected`).
+1. **More shops.** Missing: Pay 'n' Spray Key Lento, Grayson, Millport; garages Vela Rota Drive, Persistence Road,
+   Wyatt Motors, Bonita Court, Store n' Bolt; mod shops Lowballers Customs, Rideout Customs, Stockyard Speedshop,
+   Ledford Motorcycle Workshop; 1 gun store and names for the gun stores; all clothing, tattoo and hair stores.
+   PowerPyx's guide pages show one in-game map screenshot per shop with that shop selected in the list; the map
+   centres on it and its name shows in the label, so `mapshots.py --selected` gives name and position together.
+   PowerPyx sometimes answers with a "One moment, please..." challenge page (the clothing and Ammu-Nation pages, and
+   the map images for the shops above did): stop and let the owner download those by hand. Screenshots go in `work/`
+   (git- and deploy-ignored); they are PowerPyx's images and are not published.
 2. **Live position.** Not started. The idea: the player's console picture reaches a computer (Remote Play or a capture
    card) and the page reads the position from the picture. Needs gameplay screenshots that show the minimap. The
    in-game map matches the site's map closely, so `mapshots.py` is the starting point.
