@@ -53,6 +53,9 @@ points without one, and `python3 scripts/check_points.py` rejects them.
 
 `tiles/` is cut from Rockstar's own download ("Leonida Map – Printable" at rockstargames.com/VI/downloads).
 Rebuild with `python3 scripts/build_tiles.py Leonida_Map_Poster_Printable.jpg` (needs Pillow).
+Zoom levels 4 and 5 are that same image upscaled with [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) so it
+stays sharp when zoomed in: `python3 scripts/upscale_tiles.py path/to/realesrgan-ncnn-vulkan.exe` (needs
+opencv-python-headless and numpy). Upscaling sharpens edges and lettering; it adds no real detail.
 The names in `data/places.json` are read off the same map; each coordinate is the centre of the label.
 
 The map image belongs to Rockstar Games. This is a fan project with no connection to

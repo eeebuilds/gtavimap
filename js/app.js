@@ -58,10 +58,10 @@
   // Leaflet picks the tile level from CSS pixels. On a high-density screen (Retina, Windows scaling above 100 %) that
   // would stretch each tile over two or three times as many device pixels, so there we fetch one level sharper and
   // draw it at half size (two levels, quarter size, above 2.2x) - Leaflet's detectRetina trick, kept inside our
-  // zoom 0-3 pyramid.
+  // zoom 0-5 pyramid. Zoom 3 is the poster at full size; 4 and 5 are upscaled from it (scripts/upscale_tiles.py).
   var dpr = window.devicePixelRatio || 1, zOff = dpr > 2.2 ? 2 : dpr > 1 ? 1 : 0;
   L.tileLayer('tiles/{z}/{x}_{y}.jpg', {
-    tileSize: 1024 >> zOff, zoomOffset: zOff, minNativeZoom: -zOff, maxNativeZoom: 3 - zOff,
+    tileSize: 1024 >> zOff, zoomOffset: zOff, minNativeZoom: -zOff, maxNativeZoom: 5 - zOff,
     minZoom: -2, maxZoom: 5, bounds: bounds, noWrap: true, keepBuffer: 1
   }).addTo(map);
   map.fitBounds(bounds);

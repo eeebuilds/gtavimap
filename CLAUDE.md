@@ -27,13 +27,14 @@ Read `README.md` for what the site does and for the `data/points.json` schema.
 - `index.html`, `css/app.css`, `js/app.js`: the whole app. Layers are defined in `CATS` at the top of `js/app.js`.
 - `data/places.json`: place names read off the official map. `data/points.json`: everything shown in the layers.
 - `tiles/`: the map image (Rockstar's printable Leonida map, cropped to 5378 x 7502, zoom 0-3). Rebuild with `scripts/build_tiles.py`.
+  Zoom 4 and 5 are the same image upscaled with Real-ESRGAN (`scripts/upscale_tiles.py`): sharper, but no added detail.
 - `scripts/mapshots.py`: matches a pause-map screenshot to the map image and converts icon positions to map pixels.
   `scripts/icon_templates/` holds one 27 x 27 icon per category; cut new ones with `--cut`.
 - `vendor/`: Leaflet and PeerJS. `vercel.json`: redirects to liveblip.com and tile caching.
 
 ## State on 2026-11-20
 
-Live: map, place search, 44 sourced finds (area-level positions), shops with exact positions (23 of 24 gun stores,
+Live: map (sharp to full zoom since the upscaled levels 4-5), place search, 44 sourced finds (area-level positions), shops with exact positions (23 of 24 gun stores,
 16 of 19 Pay 'n' Sprays, 10 of 14 mod shops, 7 of 12 garages; all but the gun stores named), shop layers that appear
 when zoomed in, found-tracking, a link per point, and device linking (peer-to-peer through PeerJS's public server).
 
