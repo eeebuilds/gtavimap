@@ -64,6 +64,19 @@
     tileSize: 1024 >> zOff, zoomOffset: zOff, minNativeZoom: -zOff, maxNativeZoom: 5 - zOff,
     minZoom: -2, maxZoom: 5, bounds: bounds, noWrap: true, keepBuffer: 1
   }).addTo(map);
+  // The sea carried on past the poster's edges. The poster's sea is a little lighter and less saturated towards the
+  // middle of each side than the page colour, so its edge showed as a faint rectangle. Four strips start in the
+  // colour the poster has along that edge and fade to the page colour 2400 px out (scripts/build_surround.py; the
+  // figure must match its REACH). They sit above the tiles, whose edge tiles are padded with the flat page colour.
+  (function () {
+    var REACH = 2400, v = '?v=1';
+    map.createPane('surround').style.zIndex = 250;
+    [['left', -REACH, -REACH, 0, H + REACH], ['right', W, -REACH, W + REACH, H + REACH],
+     ['top', 0, -REACH, W, 0], ['bottom', 0, H, W, H + REACH]].forEach(function (s) {
+      L.imageOverlay('tiles/surround/' + s[0] + '.png' + v, L.latLngBounds(ll(s[1], s[4]), ll(s[3], s[2])),
+        { pane: 'surround', interactive: false }).addTo(map);
+    });
+  })();
   // The poster's own grid, carried on across the sea around it so the page reads as one sheet rather than a picture
   // on a plain background. Measured on the poster: a line every 600 px starting at x 589 and y 449, 2 px wide, white
   // at about half strength. Drawn as thin rectangles in map px, so the lines grow with the zoom as the printed ones

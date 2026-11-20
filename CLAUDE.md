@@ -28,6 +28,8 @@ Read `README.md` for what the site does and for the `data/points.json` schema.
 - `data/places.json`: place names read off the official map. `data/points.json`: everything shown in the layers.
 - `tiles/`: the map image (Rockstar's printable Leonida map, cropped to 5378 x 7502, zoom 0-3). Rebuild with `scripts/build_tiles.py`.
   Zoom 4 and 5 are the same image upscaled with Real-ESRGAN (`scripts/upscale_tiles.py`): sharper, but no added detail.
+  `tiles/surround/` holds four strips that carry the poster's sea colour on past its edges (`scripts/build_surround.py`);
+  `js/app.js` lays them and a continuation of the poster's grid around the map so the page reads as one sheet.
 - `scripts/mapshots.py`: matches a pause-map screenshot to the map image and converts icon positions to map pixels.
   `scripts/icon_templates/` holds one 27 x 27 icon per category; cut new ones with `--cut`.
 - `vendor/`: Leaflet and PeerJS. `vercel.json`: redirects to liveblip.com and tile caching.
